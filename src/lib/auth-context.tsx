@@ -58,22 +58,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       const newUser = session?.user ?? null
+      const hasAccessToken = window.location.hash.includes('access_token')
+      const isOnLoginPage = window.location.pathname === '/login'
       
       // Handle magic link confirmation
       if (event === 'SIGNED_IN') {
         setUser(newUser)
         setLoading(false)
-        // If we're on login page, the page will handle the redirect
-        if (window.location.pathname !== '/login') {
-          // Clean up URL hash if present
-          if (window.location.hash.includes('access_token')) {
-            window.history.replaceState({}, document.title, window.location.pathname)
+        
+        // Only handle redirects if we have an access token in the URL (magic link)
+        if (hasAccessToken) {
+          // Clean up URL hash
+          window.history.replaceState({}, document.title, window.location.pathname)
+          
+          // Only redirect if we're on login page or root
+          if (isOnLoginPage || window.location.pathname === '/') {
+            // LoginPage will handle the redirect, don't do it here
+            return
           }
-          // Redirect to dashboard if not on login page
-          setTimeout(() => {
-            window.location.href = '/dashboard'
-          }, 100)
         }
+        // Don't redirect if already on dashboard or other protected routes
       } else if (event === 'TOKEN_REFRESHED') {
         setUser(newUser)
         setLoading(false)
