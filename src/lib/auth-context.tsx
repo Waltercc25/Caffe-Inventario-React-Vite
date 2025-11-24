@@ -27,7 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Handle magic link confirmation
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_IN') {
+        setUser(session?.user ?? null)
+        // Redirect to dashboard after successful sign in
+        if (window.location.pathname === '/login' || window.location.pathname === '/') {
+          window.location.href = '/dashboard'
+        }
+      } else if (event === 'TOKEN_REFRESHED') {
         setUser(session?.user ?? null)
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
@@ -41,15 +47,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
     const accessToken = hashParams.get('access_token')
     const error = hashParams.get('error')
+    const errorDescription = hashParams.get('error_description')
     
     if (accessToken) {
       // Magic link redirect detected, session will be set by onAuthStateChange
-      // Clean up the URL
+      // Clean up the URL hash
       window.history.replaceState({}, document.title, window.location.pathname)
     }
     
     if (error) {
-      console.error('Auth error:', error)
+      console.error('Auth error:', error, errorDescription)
       setLoading(false)
     }
 
@@ -57,10 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signInWithEmail = async (email: string) => {
+    // Determine the correct redirect URL based on environment
+    const redirectUrl = import.meta.env.PROD 
+      ? `${window.location.origin}/dashboard`
+      : `${window.location.origin}/dashboard`
+    
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: redirectUrl,
       },
     })
     return { error }
