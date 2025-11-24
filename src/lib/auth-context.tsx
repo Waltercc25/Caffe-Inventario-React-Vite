@@ -16,44 +16,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check for hash fragments from magic link redirect FIRST
+    // This must be done before getSession to ensure Supabase processes the tokens
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const accessToken = hashParams.get('access_token')
+    const error = hashParams.get('error')
+    const errorDescription = hashParams.get('error_description')
+    
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
+      
+      // If we have a hash with access_token, wait a bit for Supabase to process it
+      if (accessToken && !session) {
+        // Give Supabase time to process the hash tokens
+        setTimeout(() => {
+          supabase.auth.getSession().then(({ data: { session: newSession } }) => {
+            if (newSession?.user) {
+              setUser(newSession.user)
+              // Clean up the URL hash after session is established
+              window.history.replaceState({}, document.title, window.location.pathname)
+              // Redirect to dashboard
+              if (window.location.pathname === '/login' || window.location.pathname === '/') {
+                window.location.href = '/dashboard'
+              }
+            }
+            setLoading(false)
+          })
+        }, 500)
+      } else if (accessToken && session) {
+        // Session already exists, just clean up the URL
+        window.history.replaceState({}, document.title, window.location.pathname)
+        if (window.location.pathname === '/login' || window.location.pathname === '/') {
+          window.location.href = '/dashboard'
+        }
+      }
     })
 
     // Handle auth state changes (including magic link redirects)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session?.user?.email)
+      
       // Handle magic link confirmation
       if (event === 'SIGNED_IN') {
         setUser(session?.user ?? null)
+        setLoading(false)
+        // Clean up URL hash if present
+        if (window.location.hash.includes('access_token')) {
+          window.history.replaceState({}, document.title, window.location.pathname)
+        }
         // Redirect to dashboard after successful sign in
         if (window.location.pathname === '/login' || window.location.pathname === '/') {
-          window.location.href = '/dashboard'
+          // Use setTimeout to ensure state is updated before redirect
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 100)
         }
       } else if (event === 'TOKEN_REFRESHED') {
         setUser(session?.user ?? null)
+        setLoading(false)
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
+        setLoading(false)
       } else {
         setUser(session?.user ?? null)
+        setLoading(false)
       }
-      setLoading(false)
     })
-
-    // Check for hash fragments from magic link redirect
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
-    const accessToken = hashParams.get('access_token')
-    const error = hashParams.get('error')
-    const errorDescription = hashParams.get('error_description')
-    
-    if (accessToken) {
-      // Magic link redirect detected, session will be set by onAuthStateChange
-      // Clean up the URL hash
-      window.history.replaceState({}, document.title, window.location.pathname)
-    }
     
     if (error) {
       console.error('Auth error:', error, errorDescription)
