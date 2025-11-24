@@ -19,13 +19,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true
+    let processedMagicLink = false
     
     // Check for hash fragments from magic link redirect FIRST
     // This must be done before getSession to ensure Supabase processes the tokens
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const hash = window.location.hash
+    const hashParams = new URLSearchParams(hash.substring(1))
     const accessToken = hashParams.get('access_token')
     const error = hashParams.get('error')
     const errorDescription = hashParams.get('error_description')
+    
+    // Si hay un access_token en el hash, Supabase lo procesará automáticamente
+    // Solo necesitamos esperar a que onAuthStateChange lo detecte
+    if (accessToken) {
+      processedMagicLink = true
+      console.log('🔗 Magic Link detected, waiting for Supabase to process...', {
+        hasHash: !!hash,
+        pathname: window.location.pathname
+      })
+    }
     
     // Check active sessions and sets the user (solo una vez)
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -34,30 +46,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null)
       setLoading(false)
       
-      // If we have a hash with access_token, process the magic link
-      if (accessToken && !session) {
-        // Give Supabase time to process the hash tokens
-        setTimeout(() => {
-          if (!isMounted) return
-          supabase.auth.getSession().then(({ data: { session: newSession } }) => {
-            if (!isMounted) return
-            if (newSession?.user) {
-              setUser(newSession.user)
-              // Store flag in sessionStorage to show success message
-              sessionStorage.setItem('magicLinkVerified', 'true')
-              // Clean up the URL hash
-              window.history.replaceState({}, document.title, '/login')
-              // Reload to show the login page with success message
-              window.location.reload()
-            }
-            setLoading(false)
-          })
-        }, 500)
-      } else if (accessToken && session) {
-        // Session already exists, store flag and reload
+      // Si hay access_token pero no hay sesión aún, esperar a que Supabase lo procese
+      if (accessToken && !session && processedMagicLink) {
+        // El onAuthStateChange debería manejar esto, pero por si acaso esperamos un poco
+        console.log('Access token found but no session yet, waiting for auth state change...')
+      } else if (accessToken && session && processedMagicLink) {
+        // Ya hay sesión, solo limpiar el hash y mostrar mensaje
         sessionStorage.setItem('magicLinkVerified', 'true')
+        // Limpiar el hash sin recargar
         window.history.replaceState({}, document.title, '/login')
-        window.location.reload()
       }
     })
 
@@ -65,27 +62,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return
+      
       const newUser = session?.user ?? null
       const hasAccessToken = window.location.hash.includes('access_token')
       const isOnLoginPage = window.location.pathname === '/login'
+      
+      console.log('Auth state change:', event, { hasAccessToken, isOnLoginPage, hasUser: !!newUser })
       
       // Handle magic link confirmation
       if (event === 'SIGNED_IN') {
         setUser(newUser)
         setLoading(false)
         
-        // Only handle redirects if we have an access token in the URL (magic link)
+        // Si hay access_token, es un Magic Link
         if (hasAccessToken) {
-          // Clean up URL hash
-          window.history.replaceState({}, document.title, window.location.pathname)
+          // Marcar que el Magic Link fue verificado
+          sessionStorage.setItem('magicLinkVerified', 'true')
           
-          // Only redirect if we're on login page or root
-          if (isOnLoginPage || window.location.pathname === '/') {
-            // LoginPage will handle the redirect, don't do it here
+          // Limpiar el hash de la URL
+          const currentPath = window.location.pathname
+          window.history.replaceState({}, document.title, currentPath)
+          
+          // Si estamos en login o root, LoginPage manejará la redirección
+          if (isOnLoginPage || currentPath === '/') {
+            console.log('Magic Link verified on login page, LoginPage will redirect')
             return
           }
+          
+          // Si estamos en otra página, redirigir al dashboard
+          if (currentPath !== '/dashboard' && !currentPath.startsWith('/dashboard')) {
+            console.log('Redirecting to dashboard after Magic Link')
+            setTimeout(() => {
+              window.location.href = '/dashboard'
+            }, 100)
+          }
         }
-        // Don't redirect if already on dashboard or other protected routes
       } else if (event === 'TOKEN_REFRESHED') {
         setUser(newUser)
         setLoading(false)
