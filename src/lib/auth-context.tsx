@@ -28,29 +28,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null)
       setLoading(false)
       
-      // If we have a hash with access_token, wait a bit for Supabase to process it
+      // If we have a hash with access_token, process the magic link
       if (accessToken && !session) {
         // Give Supabase time to process the hash tokens
         setTimeout(() => {
           supabase.auth.getSession().then(({ data: { session: newSession } }) => {
             if (newSession?.user) {
               setUser(newSession.user)
-              // Clean up the URL hash after session is established
-              window.history.replaceState({}, document.title, window.location.pathname)
-              // Redirect to dashboard
-              if (window.location.pathname === '/login' || window.location.pathname === '/') {
-                window.location.href = '/dashboard'
-              }
+              // Store flag in sessionStorage to show success message
+              sessionStorage.setItem('magicLinkVerified', 'true')
+              // Clean up the URL hash
+              window.history.replaceState({}, document.title, '/login')
+              // Reload to show the login page with success message
+              window.location.reload()
             }
             setLoading(false)
           })
         }, 500)
       } else if (accessToken && session) {
-        // Session already exists, just clean up the URL
-        window.history.replaceState({}, document.title, window.location.pathname)
-        if (window.location.pathname === '/login' || window.location.pathname === '/') {
-          window.location.href = '/dashboard'
-        }
+        // Session already exists, store flag and reload
+        sessionStorage.setItem('magicLinkVerified', 'true')
+        window.history.replaceState({}, document.title, '/login')
+        window.location.reload()
       }
     })
 
@@ -58,19 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session?.user?.email)
-      
       // Handle magic link confirmation
       if (event === 'SIGNED_IN') {
         setUser(session?.user ?? null)
         setLoading(false)
-        // Clean up URL hash if present
-        if (window.location.hash.includes('access_token')) {
-          window.history.replaceState({}, document.title, window.location.pathname)
-        }
-        // Redirect to dashboard after successful sign in
-        if (window.location.pathname === '/login' || window.location.pathname === '/') {
-          // Use setTimeout to ensure state is updated before redirect
+        // If we're on login page, the page will handle the redirect
+        if (window.location.pathname !== '/login') {
+          // Clean up URL hash if present
+          if (window.location.hash.includes('access_token')) {
+            window.history.replaceState({}, document.title, window.location.pathname)
+          }
+          // Redirect to dashboard if not on login page
           setTimeout(() => {
             window.location.href = '/dashboard'
           }, 100)
@@ -96,10 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signInWithEmail = async (email: string) => {
-    // Determine the correct redirect URL based on environment
-    const redirectUrl = import.meta.env.PROD 
-      ? `${window.location.origin}/dashboard`
-      : `${window.location.origin}/dashboard`
+    // Redirect to login page so user sees the verification message
+    const redirectUrl = `${window.location.origin}/login`
     
     const { error } = await supabase.auth.signInWithOtp({
       email,

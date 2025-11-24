@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Coffee, Mail, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,8 +12,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [magicLinkVerified, setMagicLinkVerified] = useState(false)
   const { signInWithEmail } = useAuth()
   const navigate = useNavigate()
+
+  // Check if magic link was just verified
+  useEffect(() => {
+    const verified = sessionStorage.getItem('magicLinkVerified')
+    if (verified === 'true') {
+      setMagicLinkVerified(true)
+      sessionStorage.removeItem('magicLinkVerified')
+      // Show success message
+      toast.success('¡Link verificado! Iniciando sesión...', {
+        duration: 3000,
+      })
+    }
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,9 +62,35 @@ export default function LoginPage() {
   }
   
   // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      // Small delay to show the success message
+      const timer = setTimeout(() => {
+        navigate('/dashboard', { replace: true })
+      }, magicLinkVerified ? 1500 : 0)
+      return () => clearTimeout(timer)
+    }
+  }, [user, magicLinkVerified, navigate])
+
   if (user) {
-    navigate('/dashboard', { replace: true })
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1447933601403-0c60e017bc32?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center">
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <Card className="w-full max-w-md relative z-10 border-none shadow-2xl bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center gap-4 py-4">
+              <CheckCircle2 className="h-16 w-16 text-green-500" />
+              <div className="text-center space-y-2">
+                <p className="font-medium text-lg">¡Link verificado!</p>
+                <p className="text-sm text-muted-foreground">
+                  Sesión iniciada correctamente. Redirigiendo...
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
