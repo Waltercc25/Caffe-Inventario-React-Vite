@@ -91,8 +91,8 @@ export default function LoginPage() {
             <div className="flex flex-col items-center gap-4 py-4">
               <CheckCircle2 className="h-16 w-16 text-green-500" />
               <div className="text-center space-y-2">
-                <p className="font-medium text-lg">¡Link verificado!</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-medium text-lg text-[#5D4037] dark:text-[#8D6E63]">¡Link verificado!</p>
+                <p className="text-sm text-[#6D4C41] dark:text-[#A1887F]">
                   Sesión iniciada correctamente. Redirigiendo...
                 </p>
               </div>
@@ -114,8 +114,8 @@ export default function LoginPage() {
               <Coffee className="h-6 w-6 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-primary">Café Manager</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-[#5D4037] dark:text-[#8D6E63]">Café Manager</CardTitle>
+          <CardDescription className="text-[#6D4C41] dark:text-[#A1887F]">
             {emailSent 
               ? 'Revisa tu correo para el enlace de acceso'
               : 'Ingresa tu correo para recibir un enlace de acceso'
@@ -126,14 +126,14 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico</Label>
+                <Label htmlFor="email" className="text-[#5D4037] dark:text-[#8D6E63] font-medium">Correo Electrónico</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-[#6D4C41] dark:text-[#A1887F]" />
                   <Input 
                     id="email" 
                     placeholder="tu@correo.com" 
                     type="email" 
-                    className="pl-10"
+                    className="pl-10 text-[#5D4037] dark:text-[#8D6E63] placeholder:text-[#A1887F] dark:placeholder:text-[#BCAAA4]"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -141,7 +141,7 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-[#6D4C41] dark:text-[#A1887F]">
                 Te enviaremos un enlace mágico a tu correo para iniciar sesión de forma segura.
               </p>
             </CardContent>
@@ -156,11 +156,11 @@ export default function LoginPage() {
             <div className="flex flex-col items-center gap-4 py-4">
               <CheckCircle2 className="h-16 w-16 text-green-500" />
               <div className="text-center space-y-2">
-                <p className="font-medium">¡Enlace enviado!</p>
-                <p className="text-sm text-muted-foreground">
-                  Revisa tu correo <strong>{email}</strong> y haz clic en el enlace para acceder.
+                <p className="font-medium text-[#5D4037] dark:text-[#8D6E63]">¡Enlace enviado!</p>
+                <p className="text-sm text-[#6D4C41] dark:text-[#A1887F]">
+                  Revisa tu correo <strong className="text-[#5D4037] dark:text-[#8D6E63]">{email}</strong> y haz clic en el enlace para acceder.
                 </p>
-                <p className="text-xs text-muted-foreground mt-4">
+                <p className="text-xs text-[#6D4C41] dark:text-[#A1887F] mt-4">
                   ¿No recibiste el correo? Revisa tu carpeta de spam.
                 </p>
               </div>
