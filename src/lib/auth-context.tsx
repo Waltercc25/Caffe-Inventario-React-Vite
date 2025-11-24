@@ -14,8 +14,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [lastSignInAttempt, setLastSignInAttempt] = useState<number>(0)
+  const RATE_LIMIT_COOLDOWN = 60000 // 60 segundos entre solicitudes
 
   useEffect(() => {
+    let isMounted = true
+    
     // Check for hash fragments from magic link redirect FIRST
     // This must be done before getSession to ensure Supabase processes the tokens
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
@@ -23,8 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const error = hashParams.get('error')
     const errorDescription = hashParams.get('error_description')
     
-    // Check active sessions and sets the user
+    // Check active sessions and sets the user (solo una vez)
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return
+      
       setUser(session?.user ?? null)
       setLoading(false)
       
@@ -32,7 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (accessToken && !session) {
         // Give Supabase time to process the hash tokens
         setTimeout(() => {
+          if (!isMounted) return
           supabase.auth.getSession().then(({ data: { session: newSession } }) => {
+            if (!isMounted) return
             if (newSession?.user) {
               setUser(newSession.user)
               // Store flag in sessionStorage to show success message
@@ -96,25 +104,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     }
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signInWithEmail = async (email: string) => {
+    // Rate limiting: prevenir múltiples solicitudes en poco tiempo
+    const now = Date.now()
+    const timeSinceLastAttempt = now - lastSignInAttempt
+    
+    if (timeSinceLastAttempt < RATE_LIMIT_COOLDOWN) {
+      const remainingSeconds = Math.ceil((RATE_LIMIT_COOLDOWN - timeSinceLastAttempt) / 1000)
+      return { 
+        error: { 
+          message: `Por favor espera ${remainingSeconds} segundos antes de solicitar otro enlace. Esto previene el spam.` 
+        } 
+      }
+    }
+    
+    setLastSignInAttempt(now)
+    
     // Redirect to login page so user sees the verification message
     const redirectUrl = `${window.location.origin}/login`
     
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectUrl,
-      },
-    })
-    return { error }
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
+      })
+      
+      if (error) {
+        // Si es error 429, dar mensaje más claro
+        if (error.status === 429 || error.message?.includes('429')) {
+          return {
+            error: {
+              ...error,
+              message: 'Demasiadas solicitudes. Por favor espera unos minutos antes de intentar nuevamente.'
+            }
+          }
+        }
+        return { error }
+      }
+      
+      return { error: null }
+    } catch (err: any) {
+      return { 
+        error: { 
+          message: err.message || 'Error al enviar el enlace de verificación. Por favor intenta más tarde.' 
+        } 
+      }
+    }
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      // Reset rate limit al cerrar sesión para permitir nuevo login
+      setLastSignInAttempt(0)
+    } catch (error) {
+      console.error('Error signing out:', error)
+      // Aún así, limpiar el estado local
+      setUser(null)
+      setLastSignInAttempt(0)
+    }
   }
 
   return (

@@ -31,19 +31,29 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Prevenir múltiples envíos
+    if (isLoading) return
+    
     setIsLoading(true)
 
     const { error } = await signInWithEmail(email)
 
     if (error) {
-      toast.error('Error al enviar el enlace de verificación')
+      // Mostrar mensaje de error más descriptivo
+      const errorMessage = error.message || 'Error al enviar el enlace de verificación'
+      toast.error(errorMessage, {
+        duration: error.status === 429 ? 5000 : 3000,
+      })
       setIsLoading(false)
       return
     }
 
     setEmailSent(true)
     setIsLoading(false)
-    toast.success('¡Enlace de verificación enviado! Revisa tu correo electrónico.')
+    toast.success('¡Enlace de verificación enviado! Revisa tu correo electrónico.', {
+      duration: 4000,
+    })
   }
 
   // Check if user is already logged in (from magic link)
