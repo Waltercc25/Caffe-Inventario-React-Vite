@@ -24,17 +24,30 @@ export default function InventoryPage() {
   const [updatingQR, setUpdatingQR] = useState(false)
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       loadProducts()
+    } else if (user === null) {
+      // User is not authenticated, stop loading
+      setLoading(false)
     }
-  }, [user])
+  }, [user?.id]) // Only depend on user.id, not the entire user object
 
   const loadProducts = async () => {
-    if (!user) return
-    setLoading(true)
-    const data = await productStore.getProducts(user.id)
-    setProducts(data)
-    setLoading(false)
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
+    try {
+      setLoading(true)
+      const data = await productStore.getProducts(user.id)
+      setProducts(data || [])
+    } catch (error) {
+      console.error('Error loading products:', error)
+      toast.error('Error al cargar los productos')
+      setProducts([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const filteredProducts = products.filter(product => 
