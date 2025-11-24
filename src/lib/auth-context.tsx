@@ -57,9 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const newUser = session?.user ?? null
+      
       // Handle magic link confirmation
       if (event === 'SIGNED_IN') {
-        setUser(session?.user ?? null)
+        setUser(newUser)
         setLoading(false)
         // If we're on login page, the page will handle the redirect
         if (window.location.pathname !== '/login') {
@@ -73,13 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }, 100)
         }
       } else if (event === 'TOKEN_REFRESHED') {
-        setUser(session?.user ?? null)
+        setUser(newUser)
         setLoading(false)
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setLoading(false)
       } else {
-        setUser(session?.user ?? null)
+        // For other events, update user state
+        setUser(newUser)
         setLoading(false)
       }
     })
