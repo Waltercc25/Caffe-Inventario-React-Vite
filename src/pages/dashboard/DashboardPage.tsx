@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Package, TrendingUp, AlertCircle, DollarSign } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Package, TrendingUp, AlertCircle, DollarSign, Plus, BarChart3, PackageSearch, ArrowRight } from 'lucide-react'
 import { productStore } from '@/lib/store'
 import { Product } from '@/lib/types'
 import { useAuth } from '@/lib/auth-context'
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -47,6 +50,7 @@ export default function DashboardPage() {
   const totalProducts = products.length
   const lowStock = products.filter(p => p.stock < 20).length
   const totalValue = products.reduce((acc, curr) => acc + (curr.price * curr.stock), 0)
+  const lowStockProducts = products.filter(p => p.stock < 20).slice(0, 3)
 
   return (
     <div className="space-y-8">
@@ -127,24 +131,85 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         
-        <Card className="col-span-3 bg-secondary/20 border-secondary/50">
+        <Card className="col-span-3">
           <CardHeader>
             <CardTitle>Acciones Rápidas</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm text-muted-foreground mb-4">
-              Utiliza el módulo de inventario para gestionar tus productos y generar códigos QR.
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="p-4 bg-background rounded-lg border text-center">
-                <span className="block text-2xl mb-1">📦</span>
-                <span className="text-xs font-medium">Agregar Stock</span>
-              </div>
-              <div className="p-4 bg-background rounded-lg border text-center">
-                <span className="block text-2xl mb-1">🏷️</span>
-                <span className="text-xs font-medium">Imprimir QR</span>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={() => navigate('/dashboard/inventory')}
+                variant="outline"
+                className="h-auto flex-col items-center justify-center py-4 gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+                <span className="text-sm font-medium">Nuevo Producto</span>
+              </Button>
+              <Button
+                onClick={() => navigate('/dashboard/inventory')}
+                variant="outline"
+                className="h-auto flex-col items-center justify-center py-4 gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                <PackageSearch className="h-5 w-5" />
+                <span className="text-sm font-medium">Ver Inventario</span>
+              </Button>
+              <Button
+                onClick={() => navigate('/dashboard/metrics')}
+                variant="outline"
+                className="h-auto flex-col items-center justify-center py-4 gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                <BarChart3 className="h-5 w-5" />
+                <span className="text-sm font-medium">Ver Métricas</span>
+              </Button>
+              <Button
+                onClick={() => navigate('/dashboard/inventory')}
+                variant="outline"
+                className="h-auto flex-col items-center justify-center py-4 gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+              >
+                <AlertCircle className="h-5 w-5" />
+                <span className="text-sm font-medium">Bajo Stock</span>
+                {lowStock > 0 && (
+                  <span className="text-xs bg-destructive text-destructive-foreground rounded-full px-2 py-0.5">
+                    {lowStock}
+                  </span>
+                )}
+              </Button>
             </div>
+            
+            {lowStockProducts.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-destructive">Productos con Bajo Stock</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/dashboard/inventory')}
+                    className="h-6 text-xs"
+                  >
+                    Ver todos
+                    <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {lowStockProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex items-center justify-between p-2 bg-destructive/10 rounded-md hover:bg-destructive/20 transition-colors cursor-pointer"
+                      onClick={() => navigate('/dashboard/inventory')}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.type}</p>
+                      </div>
+                      <div className="ml-2 text-right">
+                        <p className="text-sm font-bold text-destructive">{product.stock}</p>
+                        <p className="text-xs text-muted-foreground">unidades</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
