@@ -215,7 +215,21 @@ export default function MetricsPage() {
                     tick={{ fontSize: 12 }}
                   />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      color: '#000000'
+                    }}
+                    itemStyle={{
+                      color: '#000000'
+                    }}
+                    labelStyle={{
+                      color: '#000000',
+                      fontWeight: 'bold'
+                    }}
+                  />
                   <Legend />
                   <Bar dataKey="value" fill="#0088FE" name="Cantidad" />
                 </BarChart>
