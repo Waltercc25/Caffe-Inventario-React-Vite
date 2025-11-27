@@ -36,3 +36,7 @@ dist-ssr
 .next
 out
 
+# Documentación personal (no subir a GitHub)
+SONARCLOUD-EVALUACION.md
+GUIA-CAMBIOS-MANUALES.md
+
