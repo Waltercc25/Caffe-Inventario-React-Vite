@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { productStore } from '@/lib/store'
 import { Product } from '@/lib/types'
 import { useAuth } from '@/lib/auth-context'
@@ -249,7 +248,7 @@ export default function MetricsPage() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {distributionByType.map((entry, index) => (
+                    {distributionByType.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
