@@ -139,7 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLastSignInAttempt(now)
     
     // Redirect to login page so user sees the verification message
-    const redirectUrl = `${window.location.origin}/login`
+    // Priorizar URL de producción si está configurada, sino usar la URL actual
+    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin
+    const redirectUrl = `${baseUrl}/login`
     
     try {
       const { error } = await supabase.auth.signInWithOtp({
