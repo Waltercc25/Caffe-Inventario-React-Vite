@@ -43,7 +43,7 @@ jobs:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
     needs: test-and-lint
-    if: ${{ secrets.SONAR_TOKEN }}  # Solo ejecutar si el token está configurado
+    if: secrets.SONAR_TOKEN != ''  # Solo ejecutar si el token está configurado
     
     steps:
       - name: Checkout code
