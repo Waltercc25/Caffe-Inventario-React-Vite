@@ -1,4 +1,5 @@
 {
+  "name": "cafe-inventory-system",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
