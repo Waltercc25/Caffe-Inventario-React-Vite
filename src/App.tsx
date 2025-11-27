@@ -8,6 +8,10 @@ import DashboardLayout from '@/pages/dashboard/DashboardLayout'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import InventoryPage from '@/pages/dashboard/InventoryPage'
 
+/**
+ * Componente que protege rutas que requieren autenticación
+ * Redirige a /login si el usuario no está autenticado
+ */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
 
