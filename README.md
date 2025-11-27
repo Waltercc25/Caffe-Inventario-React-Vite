@@ -2,6 +2,8 @@
 
 Sistema de gestión de inventario para cafeterías desarrollado con React + Vite, Supabase y TypeScript.
 
+> **Última actualización**: Configuración de CI/CD y SonarCloud completada.
+
 ## 🚀 Características
 
 - ✅ Autenticación con Magic Link (enlace de verificación por correo)
