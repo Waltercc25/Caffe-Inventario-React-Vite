@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom'
-import { Coffee, LayoutDashboard, Package, LogOut, Menu } from 'lucide-react'
+import { Coffee, LayoutDashboard, Package, LogOut, Menu, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useState } from 'react'
@@ -15,6 +15,7 @@ export default function DashboardLayout() {
   const navigation = [
     { name: 'Resumen', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Inventario', href: '/dashboard/inventory', icon: Package },
+    { name: 'Métricas', href: '/dashboard/metrics', icon: BarChart3 },
   ]
 
   const handleSignOut = async () => {

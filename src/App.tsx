@@ -7,6 +7,7 @@ import ProductDetailPage from '@/pages/ProductDetailPage'
 import DashboardLayout from '@/pages/dashboard/DashboardLayout'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import InventoryPage from '@/pages/dashboard/InventoryPage'
+import MetricsPage from '@/pages/dashboard/MetricsPage'
 
 /**
  * Componente que protege rutas que requieren autenticación
@@ -46,6 +47,7 @@ function AppRoutes() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="inventory" element={<InventoryPage />} />
+        <Route path="metrics" element={<MetricsPage />} />
       </Route>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
     </Routes>
