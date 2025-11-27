@@ -12,7 +12,9 @@ function mapProductFromDB(row: any): Product {
 
 // Helper function to generate QR code URL
 function generateQRUrl(sku: string): string {
-  const baseUrl = window.location.origin
+  // Priorizar URL de producción si está configurada, sino usar la URL actual
+  // Esto asegura que los QR codes apunten a la URL correcta en producción
+  const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin
   // Codificar el SKU para la URL (por si tiene caracteres especiales)
   const encodedSku = encodeURIComponent(sku.trim().toUpperCase())
   return `${baseUrl}/product/${encodedSku}`

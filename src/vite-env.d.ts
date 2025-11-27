@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   // MCP Configuration (opcional)
   readonly SUPABASE_ACCESS_TOKEN?: string
   readonly PROJECT_REF?: string
+  // URL base de la aplicación (para códigos QR)
+  readonly VITE_APP_URL?: string
 }
 
 interface ImportMeta {

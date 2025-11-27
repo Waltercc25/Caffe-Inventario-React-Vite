@@ -26,7 +26,8 @@ export async function updateAllProductQRCodes(): Promise<{ success: boolean; upd
       return { success: true, updated: 0, errors: [] }
     }
 
-    const baseUrl = window.location.origin
+    // Priorizar URL de producción si está configurada
+    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin
     const errors: string[] = []
     let updated = 0
 
@@ -37,9 +38,17 @@ export async function updateAllProductQRCodes(): Promise<{ success: boolean; upd
         const encodedSku = encodeURIComponent(product.sku.trim().toUpperCase())
         const newQRUrl = `${baseUrl}/product/${encodedSku}`
 
-        // Verificar si el QR ya es una URL (para no actualizar innecesariamente)
-        if (product.qr_code && product.qr_code.startsWith('http')) {
-          continue // Ya es una URL, no necesita actualización
+        // Verificar si el QR necesita actualización:
+        // 1. No es una URL (es JSON o está vacío)
+        // 2. Es una URL pero apunta a localhost (necesita actualizarse a producción)
+        // 3. La URL no coincide con la URL correcta
+        const needsUpdate = !product.qr_code || 
+                           !product.qr_code.startsWith('http') ||
+                           product.qr_code.includes('localhost') ||
+                           product.qr_code !== newQRUrl
+
+        if (!needsUpdate) {
+          continue // Ya tiene la URL correcta
         }
 
         // Actualizar el producto
