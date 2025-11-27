@@ -236,26 +236,48 @@ export default function MetricsPage() {
           </CardHeader>
           <CardContent>
             {distributionByType.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={350}>
                 <PieChart>
                   <Pie
                     data={distributionByType}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
+                    labelLine={true}
+                    label={({ name, percent, value }) => {
+                      // Solo mostrar etiquetas si el porcentaje es mayor a 5% para evitar amontonamiento
+                      if (percent < 0.05) return ''
+                      return `${name}\n${(percent * 100).toFixed(1)}%`
+                    }}
+                    outerRadius={100}
+                    innerRadius={30}
                     fill="#8884d8"
                     dataKey="value"
+                    paddingAngle={2}
                   >
                     {distributionByType.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => `$${value.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+                    formatter={(value: number, name: string, props: any) => [
+                      `$${value.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                      'Valor'
+                    ]}
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px'
+                    }}
                   />
-                  <Legend />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    formatter={(value, entry: any) => {
+                      const data = distributionByType.find(d => d.name === value)
+                      const percent = data ? ((data.value / distributionByType.reduce((sum, d) => sum + d.value, 0)) * 100).toFixed(1) : '0'
+                      return `${value} (${percent}%)`
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
