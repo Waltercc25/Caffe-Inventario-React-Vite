@@ -243,7 +243,7 @@ export default function MetricsPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={true}
-                    label={({ name, percent, value }) => {
+                    label={({ name, percent }) => {
                       // Solo mostrar etiquetas si el porcentaje es mayor a 5% para evitar amontonamiento
                       if (percent < 0.05) return ''
                       return `${name}\n${(percent * 100).toFixed(1)}%`
@@ -259,7 +259,7 @@ export default function MetricsPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number, name: string, props: any) => [
+                    formatter={(value: number) => [
                       `$${value.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                       'Valor'
                     ]}
@@ -272,7 +272,7 @@ export default function MetricsPage() {
                   <Legend 
                     verticalAlign="bottom" 
                     height={36}
-                    formatter={(value, entry: any) => {
+                    formatter={(value) => {
                       const data = distributionByType.find(d => d.name === value)
                       const percent = data ? ((data.value / distributionByType.reduce((sum, d) => sum + d.value, 0)) * 100).toFixed(1) : '0'
                       return `${value} (${percent}%)`
